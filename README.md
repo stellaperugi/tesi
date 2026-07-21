@@ -1,6 +1,6 @@
 # State-Space Trajectory Dataset Generator
 
-Compact Python generator for deterministic target trajectories from two linear state-space motion models: Ornstein--Uhlenbeck velocity dynamics and coordinated turn dynamics.
+Compact Python generator for deterministic target trajectories from two linear state-space motion models: Ornstein-Uhlenbeck velocity dynamics and coordinated turn dynamics.
 
 The generated state is
 
