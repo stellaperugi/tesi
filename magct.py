@@ -10,6 +10,38 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
 
     lengths = data.get("lengths", np.full(X.shape[0], X.shape[1]))
 
+    # ---------------------------------------------------------
+    # DIAGNOSTICA: spostamento medio per passo vs rumore di misura
+    # ---------------------------------------------------------
+    # Usa posizione VERA (X, pulita) su alcune traiettorie per stimare
+    # quanto si muove il sistema in un passo, da confrontare con la
+    # deviazione standard del rumore dichiarata nell'etichetta.
+    n_traj_diag = min(50, X.shape[0])
+    spostamenti = []
+    for i in range(n_traj_diag):
+        Ti = lengths[i]
+        pos = X[i, :Ti, 0:2]
+        if len(pos) > 1:
+            d = np.diff(pos, axis=0)
+            spostamenti.append(np.linalg.norm(d, axis=1))
+    spostamento_medio = np.mean(np.concatenate(spostamenti))
+
+    # Prova a leggere lo std di rumore reale salvato nel file, se presente
+    std_rumore_dichiarato = float(data["measurement_noise_std"]) if "measurement_noise_std" in data else None
+
+    print("\n" + "-" * 60)
+    print(f"[diagnostica SNR] {etichetta_rumore}")
+    print(f"Spostamento medio per passo (posizione vera): {spostamento_medio:.3f} m")
+    if std_rumore_dichiarato is not None:
+        print(f"Std rumore di misura dichiarato: {std_rumore_dichiarato:.3f} m")
+        if std_rumore_dichiarato > 0:
+            rapporto = spostamento_medio / std_rumore_dichiarato
+            print(f"Rapporto segnale/rumore per passo: {rapporto:.2f}")
+            if rapporto < 1:
+                print("ATTENZIONE: il rumore per passo supera lo spostamento medio -> "
+                      "il passato osservato e' dominato dal rumore, non dal segnale.")
+    print("-" * 60)
+
     # PARAMETRI FINESTRA (Configurazione 10+10)
     N_passato = 10
     N_futuro = 10
@@ -25,8 +57,8 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
         traiettoria_y = Y[i, :Ti, :]
 
         for k in range(Ti - L + 1):
-            passato = traiettoria_y[k : k + N_passato, :]
-            futuro = traiettoria_y[k + N_passato : k + N_passato + N_futuro, :]
+            passato = traiettoria_y[k: k + N_passato, :]
+            futuro = traiettoria_y[k + N_passato: k + N_passato + N_futuro, :]
             H_Y_list.append(passato.flatten())
             H_Z_list.append(futuro.flatten())
 
@@ -63,7 +95,6 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
     mse_willems_list = []
     mse_svd_list = []
 
-    # Dati per grafico di esempio
     passato_grafico = None
     futuro_x_grafico = None
     futuro_y_grafico = None
@@ -79,27 +110,24 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
             if ist_ini + L > Ti_test:
                 continue
 
-            passato_osservato = traiettoria_test_y[ist_ini : ist_ini + N_passato, :]
+            passato_osservato = traiettoria_test_y[ist_ini: ist_ini + N_passato, :]
             nuovo_Y_vec = passato_osservato.flatten()
 
             futuro_reale_y = traiettoria_test_y[
-                ist_ini + N_passato : ist_ini + N_passato + N_futuro, :
+                ist_ini + N_passato: ist_ini + N_passato + N_futuro, :
             ]
             futuro_reale_x = traiettoria_test_x[
-                ist_ini + N_passato : ist_ini + N_passato + N_futuro, 0:2
+                ist_ini + N_passato: ist_ini + N_passato + N_futuro, 0:2
             ]
 
-            # Predizione Willems Standard
             g_willems = H_Y_pinv_willems @ nuovo_Y_vec
             pred_willems = (H_Z @ g_willems).reshape(N_futuro, dim_misura)
             mse_willems_list.append(np.mean((futuro_reale_x - pred_willems) ** 2))
 
-            # Predizione SVD Troncata
             g_svd = H_Y_pinv_svd @ nuovo_Y_vec
             pred_svd = (H_Z @ g_svd).reshape(N_futuro, dim_misura)
             mse_svd_list.append(np.mean((futuro_reale_x - pred_svd) ** 2))
 
-            # Salviamo una traiettoria per il grafico visivo
             if i_test == 850 and ist_ini == 60:
                 passato_grafico = passato_osservato
                 futuro_x_grafico = futuro_reale_x
@@ -107,7 +135,6 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
                 pred_willems_grafico = pred_willems
                 pred_svd_grafico = pred_svd
 
-    # CALCOLO RMSE GLOBALE
     rmse_willems = np.sqrt(np.mean(mse_willems_list))
     rmse_svd = np.sqrt(np.mean(mse_svd_list))
 
@@ -132,15 +159,16 @@ def analizza_ct(nome_file, etichetta_rumore, rango_svd):
         'condition_number': condition_number,
         'rango_svd': rango_svd,
         'rmse_willems': rmse_willems,
-        'rmse_svd': rmse_svd
+        'rmse_svd': rmse_svd,
+        'spostamento_medio': spostamento_medio,
+        'std_rumore': std_rumore_dichiarato
     }
 
 
-
 database_list = [
-    ("data/trajectory_dataset_ct_turn_12deg_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
-    ("data/trajectory_dataset_ct_turn_12deg_fixed_std_5m_dt_1.npz", "std = 5 m", 4),
-    ("data/trajectory_dataset_ct_turn_12deg_fixed_std_10m_dt_1.npz", "std = 10 m", 4),
+    ("data/trajectory_dataset_ct_turn_3deg_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
+    ("data/trajectory_dataset_ct_turn_3deg_fixed_std_5m_dt_1.npz", "std = 5 m", 4),
+    ("data/trajectory_dataset_ct_turn_3deg_fixed_std_10m_dt_1.npz", "std = 10 m", 4),
 ]
 
 risultati = []

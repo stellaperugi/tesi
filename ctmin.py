@@ -137,7 +137,7 @@ def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
 
 database_list = [
     ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
-    ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_5m_dt_1.npz", "std = 5 m", 4),
+    ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_5m_dt_1.npz", "std = 5 m", 5),
     ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_10m_dt_1.npz", "std = 10 m", 4),
 ]
 

@@ -142,7 +142,7 @@ def analizza_ou(nome_file, etichetta_rumore, rango_svd):
 database_list = [
     ("data/trajectory_dataset_ou_vx_8_vy_0_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
     ("data/trajectory_dataset_ou_vx_8_vy_0_fixed_std_5m_dt_1.npz", "std = 5 m", 3),
-    ("data/trajectory_dataset_ou_vx_8_vy_0_fixed_std_10m_dt_1.npz", "std = 10 m", 3),
+    ("data/trajectory_dataset_ou_vx_8_vy_0_fixed_std_10m_dt_1.npz", "std = 10 m", 2),
 ]
 
 risultati = []
