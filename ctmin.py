@@ -2,6 +2,63 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+def genera_tabella_grafica(risultati):
+    """Genera una figura Matplotlib contenente la tabella riassuntiva formattata per CT (w < 0)."""
+    fig, ax = plt.subplots(figsize=(10, 1.8 + len(risultati) * 0.6))
+    ax.axis("off")
+
+    col_labels = [
+        "Dataset",
+        "Condition Number",
+        "Rango SVD",
+        "RMSE Willems [m]",
+        "RMSE SVD [m]",
+    ]
+    cell_text = []
+
+    for r in risultati:
+        cell_text.append(
+            [
+                r["etichetta"],
+                f"{r['condition_number']:.2e}",
+                str(r["rango_svd"]),
+                f"{r['rmse_willems']:.4f}",
+                f"{r['rmse_svd']:.4f}",
+            ]
+        )
+
+    # Creazione della tabella grafica
+    table = ax.table(
+        cellText=cell_text,
+        colLabels=col_labels,
+        loc="center",
+        cellLoc="center",
+    )
+
+    table.auto_set_font_size(False)
+    table.set_fontsize(11)
+    table.scale(1.1, 2.0)  # Dimensione e spaziatura delle celle
+
+    # Styling professionale (Intestazione scura, righe alternate)
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:
+            cell.set_facecolor("#1f77b4")  # Blu primario per l'header
+            cell.set_text_props(color="white", weight="bold")
+        else:
+            if row % 2 == 0:
+                cell.set_facecolor("#f8f9fa")  # Grigio leggero a righe alternate
+            else:
+                cell.set_facecolor("white")
+
+    plt.title(
+        "TABELLA RIASSUNTIVA MODEL CT ($\omega < 0$ | CURVA A DESTRA)",
+        fontsize=13,
+        weight="bold",
+        pad=15,
+    )
+    plt.tight_layout()
+
+
 def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
 
     data = np.load(nome_file)
@@ -41,7 +98,7 @@ def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
     plt.figure(figsize=(8, 4))
     plt.semilogy(S, "b.-", linewidth=1.5, label="Valori singolari")
     plt.axvline(x=rango_svd, color="r", linestyle="--", label=f"Rango troncamento = {rango_svd}")
-    plt.title(f"Spettro Singolare CT (w < 0, Curva a Destra) - {etichetta_rumore}\nCondition Number: {condition_number:.2e}")
+    plt.title(f"Spettro Singolare CT ($\omega < 0$, Curva a Destra) - {etichetta_rumore}\nCondition Number: {condition_number:.2e}")
     plt.xlabel("Indice (max 20)")
     plt.ylabel("Valore singolare (scala log)")
     plt.legend()
@@ -63,11 +120,9 @@ def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
     mse_willems_list = []
     mse_svd_list = []
 
-    passato_grafico = None
-    futuro_x_grafico = None
-    futuro_y_grafico = None
-    pred_willems_grafico = None
-    pred_svd_grafico = None
+    # Dati per i grafici di esempio (Traiettoria 850 a t = 60, 80, 100)
+    target_grafici = [(850, 60), (850, 80), (850, 100)]
+    dati_grafici = {}
 
     for i_test in range(800, 1000):
         Ti_test = lengths[i_test]
@@ -98,26 +153,28 @@ def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
             pred_svd = (H_Z @ g_svd).reshape(N_futuro, dim_misura)
             mse_svd_list.append(np.mean((futuro_reale_x - pred_svd) ** 2))
 
-            # Salviamo per il grafico di esempio (Traiettoria 850, t=60)
-            if i_test == 850 and ist_ini == 60:
-                passato_grafico = passato_osservato
-                futuro_x_grafico = futuro_reale_x
-                futuro_y_grafico = futuro_reale_y
-                pred_willems_grafico = pred_willems
-                pred_svd_grafico = pred_svd
+            # Salviamo le configurazioni richieste per il grafico visivo
+            if (i_test, ist_ini) in target_grafici:
+                dati_grafici[(i_test, ist_ini)] = {
+                    "passato": passato_osservato,
+                    "futuro_x": futuro_reale_x,
+                    "futuro_y": futuro_reale_y,
+                    "pred_willems": pred_willems,
+                    "pred_svd": pred_svd,
+                }
 
     rmse_willems = np.sqrt(np.mean(mse_willems_list))
     rmse_svd = np.sqrt(np.mean(mse_svd_list))
 
-    # 5. GRAFICO CONFRONTO VISIVO
-    if passato_grafico is not None:
+    # 5. GRAFICI CONFRONTO VISIVO
+    for (traj_idx, t_idx), data_grafico in dati_grafici.items():
         plt.figure(figsize=(9, 5))
-        plt.plot(passato_grafico[:, 0], passato_grafico[:, 1], "bo-", alpha=0.5, label="Passato Y")
-        plt.plot(futuro_y_grafico[:, 0], futuro_y_grafico[:, 1], "go-", alpha=0.3, label="Futuro Y (rumoroso)")
-        plt.plot(futuro_x_grafico[:, 0], futuro_x_grafico[:, 1], "k-", linewidth=2.5, label="Futuro X (vero)")
-        plt.plot(pred_willems_grafico[:, 0], pred_willems_grafico[:, 1], "mX--", linewidth=1.5, label="Willems Std")
-        plt.plot(pred_svd_grafico[:, 0], pred_svd_grafico[:, 1], "rD-.", linewidth=2, label=f"SVD (rango {rango_svd})")
-        plt.title(f"Predizione CT (w < 0, Curva a Destra) - {etichetta_rumore}\n(Traiettoria 850, t=60)")
+        plt.plot(data_grafico["passato"][:, 0], data_grafico["passato"][:, 1], "bo-", alpha=0.5, label="Passato Y")
+        plt.plot(data_grafico["futuro_y"][:, 0], data_grafico["futuro_y"][:, 1], "go-", alpha=0.3, label="Futuro Y (rumoroso)")
+        plt.plot(data_grafico["futuro_x"][:, 0], data_grafico["futuro_x"][:, 1], "k-", linewidth=2.5, label="Futuro X (vero)")
+        plt.plot(data_grafico["pred_willems"][:, 0], data_grafico["pred_willems"][:, 1], "mX--", linewidth=1.5, label="Willems Std")
+        plt.plot(data_grafico["pred_svd"][:, 0], data_grafico["pred_svd"][:, 1], "rD-.", linewidth=2, label=f"SVD (rango {rango_svd})")
+        plt.title(f"Predizione CT ($\omega < 0$, Curva a Destra) - {etichetta_rumore}\n(Traiettoria {traj_idx}, t={t_idx})")
         plt.xlabel("Posizione x [m]")
         plt.ylabel("Posizione y [m]")
         plt.legend()
@@ -134,9 +191,11 @@ def analizza_ct_neg(nome_file, etichetta_rumore, rango_svd):
     }
 
 
+# ==============================================================================
+# ELENCO DATASET
 
 database_list = [
-    ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
+    ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 5),
     ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_5m_dt_1.npz", "std = 5 m", 5),
     ("data/trajectory_dataset_ct_turn_m3deg_fixed_std_10m_dt_1.npz", "std = 10 m", 4),
 ]
@@ -150,8 +209,9 @@ for percorso, etichetta, rango in database_list:
     except FileNotFoundError:
         print(f"File non trovato: {percorso}")
 
-# TABELLA RIASSUNTIVA FINALE
+# TABELLA RIASSUNTIVA (TESTUALE + GRAFICA)
 if risultati:
+    # 1. Stampa su terminale
     print("\n" + "=" * 75)
     print("TABELLA RIASSUNTIVA MODEL CT (w < 0 | CURVA A DESTRA)")
     print("=" * 75)
@@ -160,5 +220,8 @@ if risultati:
     for r in risultati:
         print(f"{r['etichetta']:<22} {r['condition_number']:<15.2e} {r['rango_svd']:<8} {r['rmse_willems']:<15.4f} {r['rmse_svd']:<15.4f}")
     print("-" * 75)
+
+    # 2. Generazione Figura Grafica della Tabella
+    genera_tabella_grafica(risultati)
 
 plt.show()
