@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.1] - 2026-07-28
+
+### Changed
+
+- Added BSD 3-Clause licensing information.
+- Updated the README with the project license.
+- Removed internal release instructions from the public repository.
+
 ## 2.1.0
 
 - Added within-trajectory switching among OU, positive CT and negative CT.
