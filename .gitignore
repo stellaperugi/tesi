@@ -1,14 +1,9 @@
-# Python
 __pycache__/
 *.py[cod]
 .venv/
-.env/
-
-# Generated data
+.vscode/
+.idea/
 data/
 *.npz
 *.png
-
-# Local outputs
 _test_output/
-_test_plot/

@@ -11,175 +11,132 @@ x[k] = [px[k], py[k], vx[k], vy[k]]
 and the measurement is
 
 ```text
-y[k] = [px[k], py[k]] + measurement noise
+y[k] = [px[k], py[k]] + v[k]
 ```
 
-Measurement noise is Gaussian, zero mean, isotropic, and controlled only through its standard deviation in meters.
+where `v[k]` is zero-mean isotropic Gaussian noise. Measurement uncertainty is specified directly through its standard deviation in meters.
+
+## Files
+
+```text
+trajectory_dataset_core.py
+    Common state-space models, dataset saving and plotting utilities.
+
+generate_ou_range_dataset.py
+    OU-only trajectories. Each trajectory receives one cruise velocity sampled
+    independently from user-defined x/y ranges.
+
+generate_three_model_dataset.py
+    Balanced dataset containing three trajectory classes:
+      1. OU with variable cruise velocity;
+      2. CT with a fixed positive turn rate;
+      3. CT with the corresponding fixed negative turn rate.
+```
+
+Both scripts save the same main arrays and can therefore be loaded by the same downstream code.
 
 ## Installation
 
-```bash
+```bat
 conda create -n ssm_traj python=3.11
 conda activate ssm_traj
 pip install -r requirements.txt
 ```
 
-## Examples
+## 1. OU-only dataset with variable cruise velocity
 
-### Switching OU/CT dataset
+Windows Command Prompt, one line:
 
-A 2D PNG plot of a sample trajectory is saved automatically in the output folder.
-
-
-```bash
-python generate_trajectory_dataset.py \
-  --model-mode switching \
-  --length-mode variable \
-  --min-len 200 \
-  --max-len 300 \
-  --batch-size 1000 \
-  --sampling-time 1 \
-  --measurement-std 0 5 10 50 \
-  --switch-min-duration 20 \
-  --switch-max-duration 50
+```bat
+python generate_ou_range_dataset.py --length-mode variable --min-len 200 --max-len 300 --batch-size 1000 --sampling-time 1 --ou-gamma 0.05 --ou-vx-min 4 --ou-vx-max 12 --ou-vy-min -4 --ou-vy-max 4 --measurement-std 0 1 2 3 5
 ```
 
-### OU-only dataset with assigned cruise velocity
-
-```bash
-python generate_trajectory_dataset.py \
-  --model-mode ou \
-  --length-mode fixed \
-  --data-len 250 \
-  --batch-size 1000 \
-  --sampling-time 1 \
-  --ou-gamma 0.05 \
-  --ou-cruise-vx 8 \
-  --ou-cruise-vy 0 \
-  --measurement-std 0 5 10
-```
-
-### CT-only dataset with assigned turn rate
-
-```bash
-python generate_trajectory_dataset.py \
-  --model-mode ct \
-  --length-mode fixed \
-  --data-len 250 \
-  --batch-size 1000 \
-  --sampling-time 1 \
-  --ct-turn-rate-deg 3 \
-  --measurement-std 0 5 10
-```
-
-## Saved arrays
-
-Each `.npz` file contains:
+The cruise velocity is constant within each trajectory but varies across trajectories:
 
 ```text
-states                  shape (N, T, 4)
-observations            shape (N, T, 2)
-mask                    shape (N, T)
-lengths                 shape (N,)
-transition_matrices     shape (N, T, 4, 4)
-input_matrices          shape (N, T, 4, 2)
-control_inputs          shape (N, T, 2)
-turn_rates_deg          shape (N, T)
-active_model_ids        shape (N, T)
-active_model_codes      shape (N, T)
-trajectory_model_ids    shape (N,)
-measurement_noise_std   scalar
+dx ~ Uniform(ou-vx-min, ou-vx-max)
+dy ~ Uniform(ou-vy-min, ou-vy-max)
 ```
 
-The valid portion of trajectory `i` is
+## 2. Three-model dataset
+
+Windows Command Prompt, one line:
+
+```bat
+python generate_three_model_dataset.py --length-mode variable --min-len 200 --max-len 300 --batch-size 1200 --sampling-time 1 --ou-gamma 0.05 --ou-vx-min 4 --ou-vx-max 12 --ou-vy-min -4 --ou-vy-max 4 --ct-turn-rate-deg 3 --measurement-std 0 1 2 3 5
+```
+
+The dataset is balanced as closely as possible across:
+
+```text
+ou
+ct_positive   (+3 deg/time-unit in the example)
+ct_negative   (-3 deg/time-unit in the example)
+```
+
+For exact balance, choose a batch size divisible by 3, such as `1200`.
+
+## Saved data
+
+Each `.npz` file contains at least:
+
+```text
+states                    (N, T, 4)
+observations              (N, T, 2)
+mask                      (N, T)
+lengths                   (N,)
+transition_matrices       (N, T, 4, 4)
+input_matrices            (N, T, 4, 2)
+control_inputs            (N, T, 2)
+turn_rates_deg            (N, T)
+active_model_ids          (N, T)
+active_model_codes        (N, T)
+trajectory_model_ids      (N,)
+trajectory_model_codes    (N,)
+cruise_velocities         (N, 2)
+measurement_noise_std     scalar
+```
+
+Model codes are
+
+```text
+ou           = 0
+ct_positive  = 1
+ct_negative  = 2
+pad          = -1
+```
+
+For a variable-length trajectory:
 
 ```python
-Ti = lengths[i]
-x_i = states[i, :Ti]
-y_i = observations[i, :Ti]
-models_i = active_model_ids[i, :Ti]
+import numpy as np
+
+data = np.load("data/example.npz")
+
+i = 0
+Ti = int(data["lengths"][i])
+x_i = data["states"][i, :Ti]
+y_i = data["observations"][i, :Ti]
+model_i = data["trajectory_model_ids"][i]
 ```
 
-The model codes are
+## Output files
+
+For each value supplied to `--measurement-std`, the scripts save:
+
+- one compressed `.npz` dataset;
+- one `.png` plot of the trajectory selected through `--plot-sample-index`.
+
+The default measurement-noise levels are:
 
 ```text
-ct  = 1
-ou  = 2
-pad = -1
+0, 1, 2, 3, 5 m
 ```
 
-For trajectory `i` and time step `k`, the ground-truth dynamics are
+## Modelling assumptions
 
-```python
-F = transition_matrices[i, k]
-B = input_matrices[i, k]
-d = control_inputs[i, k]
-
-x_next = F @ x + B @ d
-```
-
-For CT, `B` and `d` are zero. For OU, `B` and `d` encode the cruise velocity contribution.
-
-## Notes
-
-- Process noise is not added in this generator.
-- A measurement standard deviation of `0` produces noiseless position measurements.
-- Multiple measurement-noise levels can be generated in a single run.
-
-## Sample plot
-
-For each requested measurement-noise standard deviation, the script saves a PNG file in the output folder.
-By default it plots trajectory index `0`. You can choose a different one with:
-
-```bash
---plot-sample-index 5
-```
-
-The PNG shows the true 2D trajectory and the corresponding noisy observations. In switching mode, the active OU/CT segments are also highlighted.
-
-
-## Expected output
-
-A typical command is:
-
-```bash
-python generate_trajectory_dataset.py \
-  --model-mode switching \
-  --length-mode variable \
-  --min-len 200 \
-  --max-len 300 \
-  --batch-size 1000 \
-  --sampling-time 1 \
-  --measurement-std 0 5 10 50 \
-  --switch-min-duration 20 \
-  --switch-max-duration 50 \
-  --plot-sample-index 0
-```
-
-The output folder will contain one dataset file and one sample plot for each requested measurement-noise level:
-
-```text
-data/
-├── trajectory_dataset_switching_ou_ct_variable_std_0m_dt_1.npz
-├── trajectory_dataset_switching_ou_ct_variable_std_5m_dt_1.npz
-├── trajectory_dataset_switching_ou_ct_variable_std_10m_dt_1.npz
-├── trajectory_dataset_switching_ou_ct_variable_std_50m_dt_1.npz
-├── sample_trajectory_switching_ou_ct_variable_std_0m_dt_1_idx_0.png
-├── sample_trajectory_switching_ou_ct_variable_std_5m_dt_1_idx_0.png
-├── sample_trajectory_switching_ou_ct_variable_std_10m_dt_1_idx_0.png
-└── sample_trajectory_switching_ou_ct_variable_std_50m_dt_1_idx_0.png
-```
-
-The `.npz` files contain the simulated states, noisy or noiseless observations, trajectory lengths, masks, active-model ground truth, and the per-step state-space matrices. The `.png` files provide a quick 2D check of one generated trajectory.
-
-## Suggested repository layout
-
-```text
-ssm-trajectory-generator/
-├── generate_trajectory_dataset.py
-├── README.md
-├── requirements.txt
-└── data/                  # generated locally, usually not committed
-```
-
-Large generated datasets should usually be kept outside Git, or added to `.gitignore`, especially when they become large.
+- State and observation models are linear.
+- Process noise is zero.
+- The OU cruise velocity is fixed within one trajectory and sampled again for the next trajectory.
+- Each three-model trajectory follows one model for its full duration; there is no within-trajectory switching in this release.
+- CT positive and CT negative use equal turn-rate magnitude and opposite sign.
