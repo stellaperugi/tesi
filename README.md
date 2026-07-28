@@ -195,6 +195,18 @@ The default measurement-noise levels are:
 - In the switching generator, the dynamic state is continuous across model changes.
 - The final segment can be extended slightly when the remaining trajectory length is shorter than the requested minimum dwell time.
 
+### Common measurement-noise realization
+
+All datasets generated in the same run share a single standard-normal
+measurement-noise realization.
+
+For each measurement-noise standard deviation `sigma`, observations are
+generated as
+
+```text
+y[i, k] = position[i, k] + sigma * epsilon[i, k]
+
+
 ## License
 
 This project is released under the BSD 3-Clause License.

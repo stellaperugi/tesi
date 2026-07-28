@@ -176,24 +176,37 @@ def ou_transition_and_input(
     return transition, input_matrix
 
 
+def sample_standard_measurement_noise(
+    states: np.ndarray,
+    mask: np.ndarray,
+    rng: np.random.Generator,
+) -> np.ndarray:
+    """Draw one padded N(0, I_2) realization for all noise levels."""
+    positions = states[:, :, :2]
+    standard_noise = np.zeros_like(positions)
+    standard_noise[mask] = rng.standard_normal(
+        size=(int(mask.sum()), positions.shape[-1])
+    )
+    return standard_noise
+
+
 def add_measurement_noise(
     states: np.ndarray,
     mask: np.ndarray,
     measurement_std: float,
-    rng: np.random.Generator,
+    standard_noise: np.ndarray,
 ) -> np.ndarray:
+    """Scale a shared standard-normal realization by measurement_std."""
     positions = states[:, :, :2]
-    observations = np.zeros_like(positions)
-    observations[mask] = positions[mask]
-
-    if measurement_std > 0.0:
-        noise = rng.normal(
-            loc=0.0,
-            scale=measurement_std,
-            size=positions[mask].shape,
+    if standard_noise.shape != positions.shape:
+        raise ValueError(
+            "standard_noise must have the same shape as the position array."
         )
-        observations[mask] = positions[mask] + noise
 
+    observations = np.zeros_like(positions)
+    observations[mask] = (
+        positions[mask] + measurement_std * standard_noise[mask]
+    )
     return observations
 
 
@@ -215,10 +228,18 @@ def save_npz_variants(
     dataset_paths: list[Path] = []
     plot_paths: list[Path] = []
 
-    for index, std in enumerate(cfg.measurement_std):
-        noise_rng = np.random.default_rng(cfg.seed + 10_000 + index)
+    measurement_noise_seed = cfg.seed + 10_000
+    noise_rng = np.random.default_rng(measurement_noise_seed)
+    standard_measurement_noise = sample_standard_measurement_noise(
+        clean_data["states"], clean_data["mask"], noise_rng
+    )
+
+    for std in cfg.measurement_std:
         observations = add_measurement_noise(
-            clean_data["states"], clean_data["mask"], std, noise_rng
+            clean_data["states"],
+            clean_data["mask"],
+            std,
+            standard_measurement_noise,
         )
 
         std_tag = safe_number_tag(std)
@@ -242,6 +263,10 @@ def save_npz_variants(
             model_code_names=MODEL_NAMES_BY_CODE,
             model_code_pad=np.array(MODEL_CODE["pad"], dtype=np.int8),
             seed=np.array(cfg.seed, dtype=np.int64),
+            measurement_noise_seed=np.array(
+                measurement_noise_seed, dtype=np.int64
+            ),
+            common_noise_across_std=np.array(True),
             **metadata,
             **clean_data,
         )

@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.2.0
+
+- Measurement-noise datasets generated in the same run now share a common
+  standard-normal noise realization.
+- Different measurement standard deviations rescale the same noise samples
+  instead of generating independent realizations.
+- Added `measurement_noise_seed` and `common_noise_across_std` metadata.
+
 ## 2.1.1
 
 - Added BSD 3-Clause licensing information.
