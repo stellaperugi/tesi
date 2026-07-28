@@ -194,3 +194,11 @@ The default measurement-noise levels are:
 - CT positive and CT negative use equal turn-rate magnitude and opposite signs.
 - In the switching generator, the dynamic state is continuous across model changes.
 - The final segment can be extended slightly when the remaining trajectory length is shorter than the requested minimum dwell time.
+
+## License
+
+This project is released under the BSD 3-Clause License.
+
+See the [LICENSE](LICENSE) file for the complete license text.
+
+Copyright (c) 2026, Nicola Forti and contributors.
