@@ -271,6 +271,7 @@ def save_sample_plot(
     positions = clean_data["states"][sample_index, :length_i, :2]
     measured = observations[sample_index, :length_i]
     model_id = str(clean_data["trajectory_model_ids"][sample_index])
+    active_models = clean_data["active_model_ids"][sample_index, :length_i]
 
     std_tag = safe_number_tag(measurement_std)
     dt_tag = safe_number_tag(cfg.sampling_time)
@@ -283,14 +284,31 @@ def save_sample_plot(
     axis.plot(
         positions[:, 0],
         positions[:, 1],
-        linewidth=2.0,
+        linewidth=1.5,
+        alpha=0.45,
         label="true trajectory",
     )
+
+    segment_starts = [0]
+    for k in range(1, length_i):
+        if active_models[k] != active_models[k - 1]:
+            segment_starts.append(k)
+    segment_starts.append(length_i)
+
+    if len(segment_starts) > 2:
+        for start, end in zip(segment_starts[:-1], segment_starts[1:]):
+            axis.plot(
+                positions[start:end, 0],
+                positions[start:end, 1],
+                linewidth=2.5,
+                label=str(active_models[start]),
+            )
+
     axis.scatter(
         measured[:, 0],
         measured[:, 1],
         s=12,
-        alpha=0.55,
+        alpha=0.45,
         label="observations",
     )
     axis.scatter(
@@ -306,7 +324,10 @@ def save_sample_plot(
     )
     axis.axis("equal")
     axis.grid(True, alpha=0.3)
-    axis.legend(loc="best")
+
+    handles, labels = axis.get_legend_handles_labels()
+    unique = dict(zip(labels, handles))
+    axis.legend(unique.values(), unique.keys(), loc="best")
     fig.tight_layout()
     fig.savefig(plot_path, dpi=160)
     plt.close(fig)

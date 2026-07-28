@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.1.0
+
+- Added within-trajectory switching among OU, positive CT and negative CT.
+- Added a new OU cruise velocity sample at the start of every OU segment.
+- Added per-step segment identifiers and switching flags.
+- Updated sample plots to identify active model segments.
+- Kept the main `.npz` fields compatible with the OU-only and single-model three-class generators.
+
 ## 2.0.0
 
 - Added an OU-only generator with trajectory-specific cruise velocities sampled from user-defined x/y ranges.
