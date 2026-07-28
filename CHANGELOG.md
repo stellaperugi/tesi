@@ -1,8 +1,6 @@
 # Changelog
 
-## [2.1.1] - 2026-07-28
-
-### Changed
+## 2.1.1
 
 - Added BSD 3-Clause licensing information.
 - Updated the README with the project license.
