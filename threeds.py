@@ -3,9 +3,7 @@ import matplotlib.pyplot as plt
 
 
 def crea_tabella_grafica_classe(etichetta_rumore, condition_number, rango_svd, errori_dettaglio, rmse_glob_w, rmse_glob_s):
-    """
-    Genera una finestra grafica Matplotlib contenente la tabella dettagliata per classe.
-    """
+
     fig, ax = plt.subplots(figsize=(8, 3.5))
     ax.axis('off')
     ax.axis('tight')
@@ -284,9 +282,6 @@ def mostra_tabella_riassuntiva_finale(risultati_globali):
     plt.tight_layout()
 
 
-# ==============================================================================
-# EXECUTION
-# ==============================================================================
 database_list = [
     ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 10),
     ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_3m_dt_1.npz", "std = 3 m", 6),
