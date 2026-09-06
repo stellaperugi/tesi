@@ -283,9 +283,9 @@ def mostra_tabella_riassuntiva_finale(risultati_globali):
 
 
 database_list = [
-    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 10),
-    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_3m_dt_1.npz", "std = 3 m", 6),
-    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_5m_dt_1.npz", "std = 5 m", 5),
+    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 16),
+    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_3m_dt_1.npz", "std = 3 m", 12),
+    ("data/trajectory_dataset_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_5m_dt_1.npz", "std = 5 m", 12),
 ]
 
 risultati_globali = []

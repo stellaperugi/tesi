@@ -187,9 +187,9 @@ def analizza_ou2(nome_file, etichetta_rumore, rango_svd):
 # ==============================================================================
 # ==============================================================================
 database_list = [
-    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 6),
-    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_3m_dt_1.npz", "std = 3 m", 4),
-    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_5m_dt_1.npz", "std = 5 m", 4),
+    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 4),
+    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_3m_dt_1.npz", "std = 3 m", 2),
+    ("data/trajectory_dataset_ou_variable_cruise_vx_m10_10_vy_m10_10_variable_std_5m_dt_1.npz", "std = 5 m", 2),
 ]
 
 risultati = []

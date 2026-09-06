@@ -83,8 +83,8 @@ def confronto_switching3(nome_file, etichetta_rumore, rango_svd):
     # ---------------------------------------------------------
     # TEST SU TRAIETTORIE 800-999, PIU' ISTANTI INIZIALI
     # ---------------------------------------------------------
-    istanti_iniziali = [40, 60, 80, 100, 120, 150]
-    istanti_grafico_target = [120]  
+    istanti_iniziali = [40, 60, 80, 100, 120]
+    istanti_grafico_target = [80]  
 
     errori = {
         'willems': {'ou': [], 'ct_positive': [], 'ct_negative': [], 'switch': []},
@@ -131,7 +131,7 @@ def confronto_switching3(nome_file, etichetta_rumore, rango_svd):
             errori['willems'][tipo_finestra].append(mse_willems)
             errori['svd'][tipo_finestra].append(mse_svd)
 
-            # Salva i dati per il grafico visivo se traiettoria = 850 e istante target t = 120
+            # Salva i dati per il grafico visivo se traiettoria = 850 e istante target t = 100
             if i_test == 850 and ist_ini in istanti_grafico_target:
                 dati_grafici[ist_ini] = {
                     'passato': passato_osservato,
@@ -172,10 +172,10 @@ def confronto_switching3(nome_file, etichetta_rumore, rango_svd):
     print(f"{'GLOBALE':<15} {len(tutti_w):<12} {rmse_glob_w:<15.4f} {rmse_glob_s:<15.4f}")
 
     # ---------------------------------------------------------
-    # GRAFICO QUALITATIVO (SOLO t = 120)
+    # GRAFICO QUALITATIVO (SOLO t = 80)
     # ---------------------------------------------------------
-    if 120 in dati_grafici:
-        d = dati_grafici[120]
+    if 80 in dati_grafici:
+        d = dati_grafici[80]
         plt.figure(figsize=(8, 6))
         plt.plot(d['passato'][:, 0], d['passato'][:, 1], "bo-", alpha=0.5, label="Passato Y")
         plt.plot(d['futuro_y'][:, 0], d['futuro_y'][:, 1], "go-", alpha=0.5, label="Futuro Y (rumoroso)")
@@ -183,7 +183,7 @@ def confronto_switching3(nome_file, etichetta_rumore, rango_svd):
         plt.plot(d['pred_willems'][:, 0], d['pred_willems'][:, 1], "mX--", linewidth=1.5, label="Willems Std")
         plt.plot(d['pred_svd'][:, 0], d['pred_svd'][:, 1], "rD-.", linewidth=2, label=f"SVD (r={rango_svd})")
 
-        plt.title(f"Confronto Predizione (Traiettoria 850, t = 120)\nRegime: {d['tipo_finestra']} - {etichetta_rumore}", fontsize=12)
+        plt.title(f"Confronto Predizione (Traiettoria 850, t = 80)\nRegime: {d['tipo_finestra']} - {etichetta_rumore}", fontsize=12)
         plt.xlabel("Posizione x [m]")
         plt.ylabel("Posizione y [m]")
         plt.legend()
@@ -204,9 +204,9 @@ def confronto_switching3(nome_file, etichetta_rumore, rango_svd):
 # ELENCO DATASET
 # ==============================================================================
 database_list = [
-    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 18),
-    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_3m_dt_1.npz", "std = 3 m", 8),
-    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_5m_dt_1.npz", "std = 5 m", 8),
+    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_0m_dt_1.npz", "std = 0 m (Noiseless)", 38),
+    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_3m_dt_1.npz", "std = 3 m", 20),
+    ("data/trajectory_dataset_switching_three_models_ou_ctpos_ctneg_ou_vx_m10_10_vy_m10_10_ct_3deg_variable_std_5m_dt_1.npz", "std = 5 m", 18),
 ]
 
 risultati_globali = []
